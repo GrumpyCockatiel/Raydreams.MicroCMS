@@ -37,10 +37,10 @@ namespace Raydreams.MicroCMS
         public static readonly string LayoutsExtKey = "layoutExt";
 
         /// <summary></summary>
-        public static readonly string DefaultHomeKey = "home";
+        public static readonly string DefaultHomeKey = "homepage";
 
         /// <summary></summary>
-        public static readonly string DefaultErrorKey = "error";
+        public static readonly string DefaultErrorKey = "errorpage";
 
         /// <summary></summary>
         public static readonly string StoreTypeKey = "store";
