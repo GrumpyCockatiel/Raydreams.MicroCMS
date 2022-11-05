@@ -16,8 +16,13 @@ using System.Linq;
 
 namespace Raydreams.MicroCMS
 {
+    public interface ICMSRepository
+    {
+        (string Content, DateTimeOffset LastUpdated) GetTextFile( string shareName, string fileName );
+    }
+
     /// <summary></summary>
-    public class AzureFileShareRepository
+    public class AzureFileShareRepository : ICMSRepository
     {
         public AzureFileShareRepository( string connStr )
         {
