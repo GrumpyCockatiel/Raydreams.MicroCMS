@@ -1,0 +1,9 @@
+﻿{
+  "profiles": {
+    "Raydreams.MicroCMS": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7107",
+      "launchBrowser": false
+    }
+  }
+}
