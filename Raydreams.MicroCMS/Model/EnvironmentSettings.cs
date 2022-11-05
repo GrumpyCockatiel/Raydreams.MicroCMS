@@ -61,7 +61,9 @@ namespace Raydreams.MicroCMS
             this.DefaultHome = Environment.GetEnvironmentVariable( DefaultHomeKey );
             this.DefaultError = Environment.GetEnvironmentVariable( DefaultErrorKey );
 
-			this.ExcludeFolders = new string[] { this.ImagesDir, this.LayoutsDir }; 
+			this.Store = Environment.GetEnvironmentVariable( DefaultErrorKey ).GetEnumValue<StoreType>( true );
+
+            this.ExcludeFolders = new string[] { this.ImagesDir, this.LayoutsDir }; 
         }
 
         /// <summary>Gets environment settings from a string based on the enum value</summary>
