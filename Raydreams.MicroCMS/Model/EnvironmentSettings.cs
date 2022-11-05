@@ -4,6 +4,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Raydreams.MicroCMS
 {
+	public enum StoreType
+    {
+		/// <summary>File Share</summary>
+		File = 0,
+        /// <summary>Blob Container</summary>
+        Blob = 1
+    }
+
 	/// <summary>Encapsulates the settings are various environments.</summary>
 	public class EnvironmentSettings
 	{
@@ -19,6 +27,24 @@ namespace Raydreams.MicroCMS
         /// <summary></summary>
         public static readonly string FileStoreKey = "connStr";
 
+        /// <summary></summary>
+        public static readonly string ImagesDirKey = "imageDir";
+
+        /// <summary></summary>
+        public static readonly string LayoutsDirKey = "layoutDir";
+
+        /// <summary></summary>
+        public static readonly string LayoutsExtKey = "layoutExt";
+
+        /// <summary></summary>
+        public static readonly string DefaultHomeKey = "home";
+
+        /// <summary></summary>
+        public static readonly string DefaultErrorKey = "error";
+
+        /// <summary></summary>
+        public static readonly string StoreTypeKey = "store";
+
         #endregion [ Config Keys ]
 
         /// <summary>Main constructor loads Config settings</summary>
@@ -27,6 +53,15 @@ namespace Raydreams.MicroCMS
             // load client details
 			this.BlobRoot = Environment.GetEnvironmentVariable( BlobRootKey );
             this.FileStore = Environment.GetEnvironmentVariable( FileStoreKey );
+
+            this.ImagesDir = Environment.GetEnvironmentVariable( ImagesDirKey );
+            this.LayoutsDir = Environment.GetEnvironmentVariable( LayoutsDirKey );
+            this.LayoutExtension = Environment.GetEnvironmentVariable( LayoutsExtKey );
+
+            this.DefaultHome = Environment.GetEnvironmentVariable( DefaultHomeKey );
+            this.DefaultError = Environment.GetEnvironmentVariable( DefaultErrorKey );
+
+			this.ExcludeFolders = new string[] { this.ImagesDir, this.LayoutsDir }; 
         }
 
         /// <summary>Gets environment settings from a string based on the enum value</summary>
@@ -68,7 +103,7 @@ namespace Raydreams.MicroCMS
 		/// <summary>The connection string to the Storage Account</summary>
 		public string FileStore { get; set; }
 
-		/// <summary>The root blob container name</summary>
+		/// <summary>The root blob container or share name</summary>
 		public string BlobRoot { get; set; } = "cms";
 
         /// <summary>The images folder</summary>
@@ -77,17 +112,20 @@ namespace Raydreams.MicroCMS
         /// <summary>The layouts folder</summary>
         public string LayoutsDir { get; set; } = "layouts";
 
-        /// <summary></summary>
-        public IEnumerable<string> ExcludeFolders { get; set; } = new string[] { "images", "layouts" };
-
         /// <summary>The filed extension used for the layout files without a .</summary>
         public string LayoutExtension { get; set; } = "html";
 
         /// <summary>Default home page MD file</summary>
-        public string DefaultHome { get; set; } = "MicroCMS";
+        public string DefaultHome { get; set; } = "index";
 
         /// <summary>Default error page MD file</summary>
         public string DefaultError { get; set; } = "error";
+
+		/// <summary></summary>
+		public StoreType Store { get; set; } = StoreType.File;
+
+        /// <summary></summary>
+        public IEnumerable<string> ExcludeFolders { get; set; }
 
         #endregion [ Properties ]
 
