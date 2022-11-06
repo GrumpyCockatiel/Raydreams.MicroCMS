@@ -8,15 +8,17 @@ using System.Threading.Tasks;
 
 namespace Raydreams.MicroCMS
 {
-    /// <summary></summary>
+    /// <summary>Get page intercepts requets to the root but will only return pages for now - no images.</summary>
     public class GetPageFunction : BaseFunction
     {
         public GetPageFunction( ICMSGateway gate ) : base( gate )
         { }
 
         [Function( "GetPage" )]
-        public HttpResponseData Run( [HttpTrigger( AuthorizationLevel.Anonymous, "get", Route = "page/{file?}" )] HttpRequestData req, string file, FunctionContext ctx )
+        public HttpResponseData Run( [HttpTrigger( AuthorizationLevel.Anonymous, "get", Route = "{file?}" )] HttpRequestData req, string file, FunctionContext ctx )
         {
+            //$"{req.Url.Scheme}://{req.Url.Host}/page"
+
             ILogger logger = ctx.GetLogger( "API" );
             logger.LogInformation( $"{GetType().Name} triggered." );
 
