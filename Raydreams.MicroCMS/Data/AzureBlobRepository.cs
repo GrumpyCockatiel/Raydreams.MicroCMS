@@ -18,8 +18,8 @@ namespace Raydreams.MicroCMS
 {
     /// <summary>Data manager with Azure Files and Blobs.</summary>
     /// <remarks>Blob and Container names are CASE SENSITIVE</remarks>
-	public class AzureBlobRepository
-	{
+	public class AzureBlobRepository : ICMSRepository
+    {
 		#region [ Constructor ]
 
 		/// <summary></summary>
@@ -86,7 +86,7 @@ namespace Raydreams.MicroCMS
         /// <param name="containerName">container name</param>
         /// <param name="blobName">blob name</param>
         /// <returns>Wrapped raw bytes with some metadata</returns>
-        public RawFileWrapper GetRawBlob( string containerName, string blobName )
+        public RawFileWrapper GetRawFile( string containerName, string blobName )
         {
             RawFileWrapper results = new RawFileWrapper();
 
@@ -136,13 +136,13 @@ namespace Raydreams.MicroCMS
         /// <param name="containerName"></param>
         /// <param name="blobName"></param>
         /// <returns></returns>
-        public string GetTextBlob( string containerName, string blobName )
+        public PageDetails GetTextFile( string containerName, string blobName )
         {
 			string contents = String.Empty;
 
             // validate input
             if ( String.IsNullOrWhiteSpace( containerName ) || String.IsNullOrWhiteSpace( blobName ) )
-                return contents;
+                new PageDetails( contents, DateTimeOffset.MaxValue );
 
             containerName = containerName.Trim();
             blobName = blobName.Trim();
@@ -153,7 +153,7 @@ namespace Raydreams.MicroCMS
             // check the container exists
             Response<bool> exists = container.Exists();
             if ( !exists.Value )
-                return contents;
+                new PageDetails( contents, DateTimeOffset.MaxValue );
 
             // set options
             BlobOpenReadOptions op = new BlobOpenReadOptions( false );
@@ -170,14 +170,14 @@ namespace Raydreams.MicroCMS
 
             contents = Encoding.UTF8.GetString( data );
 
-			return contents;
+			return new PageDetails( contents, props.LastModified );
         }
 
         /// <summary>Get a list of All blobs in the specified contaier</summary>
         /// <param name="containerName">container name</param>
         /// <returns>A list of blob names</returns>
         /// <remarks>Still need to determine what we need back for each blob</remarks>
-        public List<string> ListBlobs( string containerName, string pattern = null )
+        public List<string> ListFiles( string containerName, string pattern = null )
 		{
 			List<string> blobs = new List<string>();
 

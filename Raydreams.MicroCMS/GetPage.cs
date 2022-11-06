@@ -29,7 +29,7 @@ namespace Raydreams.MicroCMS
             try
             {
                 this.Gateway.AddHeaders( req ).AddLogger(logger);
-                results.ResultObject = this.Gateway.GetContentByPath( file?.Trim(), layout, wrapped );
+                results.ResultObject = this.Gateway.GetPage( file?.Trim(), layout, wrapped );
             }
             catch ( Exception exp )
             {

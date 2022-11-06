@@ -16,9 +16,14 @@ using System.Linq;
 
 namespace Raydreams.MicroCMS
 {
+    /// <summary></summary>
     public interface ICMSRepository
     {
-        (string Content, DateTimeOffset LastUpdated) GetTextFile( string shareName, string fileName );
+        PageDetails GetTextFile( string shareName, string fileName );
+
+        RawFileWrapper GetRawFile( string shareName, string fileName );
+
+        List<string> ListFiles( string shareName, string pattern = null );
     }
 
     /// <summary></summary>
@@ -40,13 +45,13 @@ namespace Raydreams.MicroCMS
         /// <param name="shareName"></param>
         /// <param name="fileName"></param>
         /// <returns>Just returns the text of the file</returns>
-        public (string Content, DateTimeOffset LastUpdated) GetTextFile( string shareName, string fileName )
+        public PageDetails GetTextFile( string shareName, string fileName )
         {
             string contents = String.Empty;
 
             // validate input
             if ( String.IsNullOrWhiteSpace( fileName ) || String.IsNullOrWhiteSpace( shareName ) )
-                return (contents, DateTimeOffset.MaxValue);
+                return new PageDetails(contents, DateTimeOffset.MaxValue);
 
             shareName = shareName.Trim();
             fileName = fileName.Trim();
@@ -57,7 +62,7 @@ namespace Raydreams.MicroCMS
             Response<bool> exists = share.Exists();
 
             if ( !exists.Value )
-                return (contents, DateTimeOffset.MaxValue);
+                return new PageDetails(contents, DateTimeOffset.MaxValue);
 
             var dir = share.GetRootDirectoryClient();
             ShareFileClient file = dir.GetFileClient( fileName );
@@ -70,10 +75,11 @@ namespace Raydreams.MicroCMS
             stream.Read( data, 0, data.Length );
             stream.Close();
 
+            // get the properties
             var prop = file.GetProperties();
             DateTimeOffset? ts = prop?.Value?.LastModified;
 
-            return (Encoding.UTF8.GetString( data ), ts ?? DateTimeOffset.MaxValue);
+            return new PageDetails( Encoding.UTF8.GetString( data ), ts ?? DateTimeOffset.MaxValue );
         }
 
         /// <summary></summary>
@@ -118,7 +124,7 @@ namespace Raydreams.MicroCMS
         /// <summary>Gets a list of all files</summary>
         /// <param name="shareName"></param>
         /// <returns></returns>
-        public List<string> ListFiles( string shareName )
+        public List<string> ListFiles( string shareName, string pattern = null )
         {
             List<string> files = new List<string>();
 

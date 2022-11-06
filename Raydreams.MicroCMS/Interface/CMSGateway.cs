@@ -10,27 +10,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Raydreams.MicroCMS
 {
-    /// <summary></summary>
-    public interface ICMSGateway
-    {
-        /// <summary></summary>
-        ICMSGateway AddHeaders( HttpRequestData req );
-
-        ICMSGateway AddLogger( ILogger logger );
-
-        /// <summary></summary>
-        string Ping(string msg);
-
-        /// <summary></summary>
-        string GetContentByPath( string file, string template, bool wrapped = false );
-
-        /// <summary></summary>
-        RawFileWrapper GetImage( string file );
-
-        /// <summary></summary>
-        string ListPages(string template);
-    }
-
 	/// <summary></summary>
 	public partial class CMSGateway : ICMSGateway
 	{
@@ -58,7 +37,11 @@ namespace Raydreams.MicroCMS
             // config and auth
             this.Config = env;
 
+            // set the Markdown to HTML func
             this.ConvertMarkdown = MarkdownEngine.Markdown2HTML;
+
+            // need to switch on the type of source
+            // ICMSRepository
         }
 
         #endregion [ Constructor ]
@@ -132,13 +115,13 @@ namespace Raydreams.MicroCMS
             string version = GetVersion();
 
             // create the signature
-            return $"Service : {this.GetType().FullName}; Version : {version}; Env : {this.Config.EnvironmentType}; ";
+            return $"Service : {this.GetType().FullName}; Version : {version}; Env : {this.Config.EnvironmentType}; Message : {msg}";
         }
 
         /// <summary></summary>
         /// <param name="file"></param>
         /// <returns></returns>
-        public string GetContentByPath( string file, string template, bool wrapped = false )
+        public string GetPage( string file, string template, bool wrapped = false )
         {
 			// validate input
             file = String.IsNullOrWhiteSpace( file ) ? $"{this.Config.DefaultHome}.md" : $"{file.Trim()}.md";
@@ -149,7 +132,9 @@ namespace Raydreams.MicroCMS
 
             // get the files
             AzureFileShareRepository repo = new AzureFileShareRepository( this.Config.FileStore );
-			var md = repo.GetTextFile( this.Config.BlobRoot, file );
+
+            // BUG - need to test the file exists first - if not return 404
+            var md = repo.GetTextFile( this.Config.BlobRoot, file );
             var layout = repo.GetTextFile(this.Config.BlobRoot, $"{this.Config.LayoutsDir}/{template}" );
 
             if ( String.IsNullOrWhiteSpace( md.Content ) )
