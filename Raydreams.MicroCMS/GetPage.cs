@@ -31,7 +31,13 @@ namespace Raydreams.MicroCMS
             try
             {
                 this.Gateway.AddHeaders( req ).AddLogger(logger);
-                results.ResultObject = this.Gateway.GetPage( file?.Trim(), layout, wrapped );
+
+                file = ( String.IsNullOrWhiteSpace( file ) ) ? String.Empty : file.Trim();
+
+                if (file.Equals("list", StringComparison.InvariantCultureIgnoreCase) )
+                    results.ResultObject = this.Gateway.ListPages( layout );
+                else
+                    results.ResultObject = this.Gateway.GetPage( file, layout, wrapped );
             }
             catch ( Exception exp )
             {
