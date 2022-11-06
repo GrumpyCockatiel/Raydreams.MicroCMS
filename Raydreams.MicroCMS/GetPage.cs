@@ -34,10 +34,14 @@ namespace Raydreams.MicroCMS
 
                 file = ( String.IsNullOrWhiteSpace( file ) ) ? String.Empty : file.Trim();
 
-                if (file.Equals("list", StringComparison.InvariantCultureIgnoreCase) )
+                if ( file.Equals( "list", StringComparison.InvariantCultureIgnoreCase ) )
                     results.ResultObject = this.Gateway.ListPages( layout );
                 else
+                {
+                    //if ( file.StartsWith( "page", StringComparison.InvariantCultureIgnoreCase ) )
+                        //file = file.Substring( 5 );
                     results.ResultObject = this.Gateway.GetPage( file, layout, wrapped );
+                }
             }
             catch ( Exception exp )
             {
