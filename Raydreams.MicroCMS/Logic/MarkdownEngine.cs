@@ -11,7 +11,8 @@ namespace Raydreams.MicroCMS
             if ( String.IsNullOrWhiteSpace( md ) )
                 return "<p>&nbsp;</p>";
 
-            MarkdownPipeline pipe = new MarkdownPipelineBuilder().UseSoftlineBreakAsHardlineBreak().Build();
+            MarkdownPipeline pipe = new MarkdownPipelineBuilder().UseYamlFrontMatter().UseAdvancedExtensions().Build();
+            //UseSoftlineBreakAsHardlineBreak();
             string html = Markdown.ToHtml( md, pipe );
 
             return html;
