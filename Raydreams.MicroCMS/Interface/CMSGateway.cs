@@ -192,7 +192,7 @@ namespace Raydreams.MicroCMS
                 }
 
                 string page = s.TrimExtension();
-                sb.AppendLine($"<li><a href=\"./{page}\">{page}</a></li>");
+                sb.AppendLine($"<li><a href=\"/page/{page}\">{page}</a></li>");
             } );
             sb.AppendLine($"</ul>");
 
