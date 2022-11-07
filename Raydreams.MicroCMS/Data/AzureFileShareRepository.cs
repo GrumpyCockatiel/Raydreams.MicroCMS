@@ -59,13 +59,20 @@ namespace Raydreams.MicroCMS
             // Get a reference to a share and then create it
             ShareClient share = new ShareClient( this.ConnectionString, shareName );
 
+            // check the share exists
             Response<bool> exists = share.Exists();
 
             if ( !exists.Value )
                 return new PageDetails(contents, DateTimeOffset.MaxValue);
 
+        
             var dir = share.GetRootDirectoryClient();
             ShareFileClient file = dir.GetFileClient( fileName );
+
+            // check the file exists
+            exists = file.Exists();
+            if (!exists.Value)
+                return new PageDetails(contents, DateTimeOffset.MaxValue);
 
             // set options
             ShareFileOpenReadOptions op = new ShareFileOpenReadOptions( false );

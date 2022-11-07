@@ -20,7 +20,8 @@ namespace Raydreams.MicroCMS
 				} )
 				.ConfigureServices( (ctx, s) => {
 					s.AddScoped<ICMSGateway>( p => {
-						ICMSGateway gate = new CMSGateway( env );
+                        var env = EnvironmentSettings.GetSettings(Environment.GetEnvironmentVariable(EnvironmentSettings.EnvironmentKey));
+                        ICMSGateway gate = new CMSGateway( env );
 						return gate;
 					} );
 				} )

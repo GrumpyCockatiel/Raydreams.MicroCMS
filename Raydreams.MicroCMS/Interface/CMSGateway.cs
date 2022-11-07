@@ -119,6 +119,10 @@ namespace Raydreams.MicroCMS
         }
 
         /// <summary></summary>
+        /// <returns></returns>
+        public string RedirectHome() => $"{this.RequestedURL.Scheme}://{this.RequestedURL.Host}:{this.RequestedURL.Port}/page/{this.Config.DefaultHome}";
+
+        /// <summary></summary>
         /// <param name="file"></param>
         /// <returns></returns>
         public string GetPage( string file, string template, bool wrapped = false )

@@ -20,7 +20,9 @@ namespace Raydreams.MicroCMS
             ILogger logger = ctx.GetLogger( "API" );
             logger.LogInformation( $"{GetType().Name} triggered." );
 
-            return req.EmptyResponse();
+            this.Gateway.AddHeaders(req).AddLogger(logger);
+
+            return req.Redirect( this.Gateway.RedirectHome() );
         }
     }
 }

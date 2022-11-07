@@ -183,8 +183,9 @@ namespace Raydreams.MicroCMS
 		public static HttpResponseData Redirect( this HttpRequestData req, string url )
 		{
 			url = ( !String.IsNullOrWhiteSpace( url ) ) ? url.Trim() : String.Empty;
-
-			HttpResponseData resp = req.CreateResponse( HttpStatusCode.Redirect );
+			
+			//HttpStatusCode.Redirect
+			HttpResponseData resp = req.CreateResponse( HttpStatusCode.Moved );
 			resp.Headers.Add( "Location", url );
 
 			return resp;

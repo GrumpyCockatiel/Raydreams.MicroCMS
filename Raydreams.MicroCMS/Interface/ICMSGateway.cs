@@ -16,6 +16,9 @@ namespace Raydreams.MicroCMS
         /// <summary>Just Ping the API</summary>
         string Ping( string msg );
 
+        /// <summary>Redirect back to the home page</summary>
+        string RedirectHome();
+
         /// <summary>Get a page</summary>
         string GetPage( string file, string template, bool wrapped = false );
 
