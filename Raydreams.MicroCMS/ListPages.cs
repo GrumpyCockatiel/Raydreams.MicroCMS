@@ -13,7 +13,7 @@ namespace Raydreams.MicroCMS
         { }
 
         [Function( "ListPages" )]
-        public HttpResponseData Run( [HttpTrigger( AuthorizationLevel.Anonymous, "get", Route = "list" )] HttpRequestData req, FunctionContext ctx )
+        public HttpResponseData Run( [HttpTrigger( AuthorizationLevel.Anonymous, "get", Route = "list/{top}" )] HttpRequestData req, int top, FunctionContext ctx )
         {
             ILogger logger = ctx.GetLogger( "API" );
             logger.LogInformation( $"{GetType().Name} triggered." );
