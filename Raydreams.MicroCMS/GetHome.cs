@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Raydreams.MicroCMS
 {
-    /// <summary>Get a binary image file only from the data store</summary>
+    /// <summary>Get Home intercepts any request in the form of '/something' with no more path vars</summary>
     public class GetHomeFunction : BaseFunction
     {
         public GetHomeFunction( ICMSGateway gate ) : base( gate )
