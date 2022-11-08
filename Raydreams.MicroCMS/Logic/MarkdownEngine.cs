@@ -23,7 +23,8 @@ namespace Raydreams.MicroCMS
             return "<h1>Markdown not supported!</h1>";
         }
 
-        public static readonly string SimpleHTML = @"<!DOCTYPE html><html lang=""en""><head><meta charset=""utf-8"" /><title></title></head><body></body>{% BODY %}</html>";
+        /// <summary>A simple default stock template</summary>
+        public static readonly string SimpleHTML = @"<!DOCTYPE html><html lang=""en""><head><meta charset=""utf-8"" /><title></title></head><body>{% BODY %}</body></html>";
     }
 }
 
