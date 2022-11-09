@@ -15,7 +15,7 @@ namespace Raydreams.MicroCMS
         { }
 
         [Function( "GetPage" )]
-        public HttpResponseData Run( [HttpTrigger( AuthorizationLevel.Anonymous, "get", Route = "page/{file?}" )] HttpRequestData req, string file, FunctionContext ctx )
+        public HttpResponseData Run( [HttpTrigger( AuthorizationLevel.Anonymous, "get", Route = "page/{part1?}/{part2?}" )] HttpRequestData req, string part1, string part2, FunctionContext ctx )
         {
             //$"{req.Url.Scheme}://{req.Url.Host}/page"
 
@@ -32,16 +32,12 @@ namespace Raydreams.MicroCMS
             {
                 this.Gateway.AddHeaders( req ).AddLogger(logger);
 
-                file = ( String.IsNullOrWhiteSpace( file ) ) ? String.Empty : file.Trim();
+                string file  = ( String.IsNullOrWhiteSpace( part1 ) ) ? String.Empty : part1.Trim();
 
-                //if ( file.Equals( "list", StringComparison.InvariantCultureIgnoreCase ) )
-                    //results.ResultObject = this.Gateway.ListPages( layout );
-                //else // no verb then look for a page
-                //{
-                    //if ( file.StartsWith( "page", StringComparison.InvariantCultureIgnoreCase ) )
-                        //file = file.Substring( 5 );
-                    results.ResultObject = this.Gateway.GetPage( file, layout, wrapped );
-                //}
+                if ( !String.IsNullOrWhiteSpace(part2) )
+                    file = $"{file}/{part2.Trim()}";
+
+                results.ResultObject = this.Gateway.GetPage( file, layout, wrapped );
             }
             catch ( Exception exp )
             {
