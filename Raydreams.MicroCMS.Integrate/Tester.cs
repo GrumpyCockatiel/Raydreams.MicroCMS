@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Extensions.Hosting;
+using Raydreams.MicroCMS.IO;
 
 namespace Raydreams.MicroCMS.Integrate
 {
@@ -41,22 +42,47 @@ namespace Raydreams.MicroCMS.Integrate
             return Task.FromResult( res );
         }
 
+        /// <summary></summary>
+        /// <returns></returns>
         public int Run()
         {
-            this.GetTextFileTest();
+            this.UploadFileTest();
 
-            this.ListFilesTest();
+            //this.GetTextFileTest();
+
+            //this.ListFilesTest();
 
             return 0;
         }
 
-        public bool GetTextFileTest()
+        /// <summary></summary>
+        /// <returns></returns>
+        public bool UploadFileTest()
         {
-            var file = this.Repo.GetTextFile( "blog", "fresheyes.md" );
+            var watchRoot = Path.Combine(IOHelpers.DesktopPath, "Blog" );
+            var uploadFile = Path.Combine(watchRoot, "page", "upload.md");
+
+            string delta = new DirectoryInfo(watchRoot).PathDiff(new FileInfo(uploadFile));
+
+            var file = IOHelpers.ReadFile(uploadFile);
+
+            this.Repo.UploadFile(file, "blog", "subfolder");
 
             return true;
         }
 
+        /// <summary></summary>
+        /// <returns></returns>
+        public bool GetTextFileTest()
+        {
+            var file = this.Repo.GetTextFile("blog", "arch/architecture-1.md");
+            //var file = this.Repo.GetTextFile( "blog", "fresheyes.md" );
+
+            return true;
+        }
+
+        /// <summary></summary>
+        /// <returns></returns>
         public bool GetRawFileTest()
         {
             var file = this.Repo.GetRawFile( "blog", "images/PROS.jpeg" );
@@ -64,6 +90,9 @@ namespace Raydreams.MicroCMS.Integrate
             return true;
 
         }
+
+        /// <summary></summary>
+        /// <returns></returns>
         public bool ListFilesTest()
         {
             List<string> file = this.Repo.ListFiles( "blog" );
@@ -73,6 +102,7 @@ namespace Raydreams.MicroCMS.Integrate
             return true;
 
         }
+
 
     }
 

@@ -22,6 +22,7 @@
     <None Remove="Data\" />
     <None Remove="Azure.Storage.Files.Shares" />
     <None Remove="Interface\" />
+    <None Remove="IO\" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
@@ -35,5 +36,6 @@
     <Folder Include="Logic\" />
     <Folder Include="Model\" />
     <Folder Include="Interface\" />
+    <Folder Include="IO\" />
   </ItemGroup>
 </Project>

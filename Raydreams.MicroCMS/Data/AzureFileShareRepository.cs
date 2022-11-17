@@ -17,16 +17,6 @@ using System.Linq;
 namespace Raydreams.MicroCMS
 {
     /// <summary></summary>
-    public interface ICMSRepository
-    {
-        PageDetails GetTextFile( string shareName, string fileName );
-
-        RawFileWrapper GetRawFile( string shareName, string fileName );
-
-        List<string> ListFiles( string shareName, string pattern = null );
-    }
-
-    /// <summary></summary>
     public class AzureFileShareRepository : ICMSRepository
     {
         public AzureFileShareRepository( string connStr )
@@ -155,6 +145,46 @@ namespace Raydreams.MicroCMS
         }
 
         /// <summary></summary>
+        /// <param name="file"></param>
+        /// <param name="shareName"></param>
+        /// <param name="sharePath"></param>
+        /// <returns></returns>
+        public string UploadFile( RawFileWrapper file, string shareName, string sharePath )
+        {
+            // validate input
+            if (!file.IsValid || String.IsNullOrWhiteSpace(shareName))
+                return null;
+
+            // Get a reference to a share and then create it
+            ShareClient share = new ShareClient(this.ConnectionString, shareName);
+
+            Response<bool> exists = share.Exists();
+
+            if (!exists.Value)
+                return null;
+
+            var dir = share.GetRootDirectoryClient();
+
+            string uploadPath = file.Filename.Trim( new char[] { ' ', '/', '\\' } );
+
+            if ( !String.IsNullOrEmpty( sharePath ) )
+            {
+                sharePath = sharePath.Trim( new char[] { ' ', '/', '\\' } );
+                if (sharePath != String.Empty )
+                    uploadPath = $"{sharePath}/{file.Filename}";
+            }
+               
+            Response<ShareFileClient> resp = dir.CreateFile(uploadPath, file.Data.Length);
+            var data = new MemoryStream(file.Data);
+
+            Response<ShareFileUploadInfo> resp2 = resp.Value.Upload(data);
+            string etag = resp2.Value.ETag.ToString();
+
+            Console.WriteLine( $"{etag} : Uploaded file {file.Filename}");
+            return etag;
+        }
+
+        /// <summary>Recursive call to get all child files</summary>
         /// <param name="share"></param>
         /// <param name="dir"></param>
         /// <returns></returns>
@@ -166,6 +196,7 @@ namespace Raydreams.MicroCMS
             Pageable<ShareFileItem> results = dir.GetFilesAndDirectories( ops );
 
             IEnumerator<ShareFileItem> enu = results?.GetEnumerator();
+
             while ( enu.MoveNext() )
             {
                 // needs to descend into the 

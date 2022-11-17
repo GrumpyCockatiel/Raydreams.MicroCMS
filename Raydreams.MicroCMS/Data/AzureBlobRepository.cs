@@ -37,14 +37,14 @@ namespace Raydreams.MicroCMS
 		public string ConnectionString { get; set; } = String.Empty;
 
 		/// <summary>Used when uploading an image to storage</summary>
-		public Stream ImageFile { get; set; }
+		//public Stream ImageFile { get; set; }
 
 		/// <summary>Used when uploading an image to storage</summary>
-		public string ContentType { get; set; }
+		//public string ContentType { get; set; }
 
 		/// <summary>Used when uploading an image to storage</summary>
 		/// <remarks>May no longer need this property</remarks>
-		public string FileName { get; set; }
+		//public string FileName { get; set; }
 
 		#endregion [ Properties ]
 
@@ -208,6 +208,82 @@ namespace Raydreams.MicroCMS
 			return blobs;
 		}
 
-		#endregion [ Methods ]
-	}
+        /// <summary>Uploads a blob from a FileWrapper instance</summary>
+        /// <param name="file"></param>
+        /// <param name="containerName">Container to load to</param>
+        /// <param name="blobName">Optional blob name. Random will be assigned if null</param>
+        /// <returns></returns>
+        public string UploadFile(RawFileWrapper file, string containerName, string blobName = null)
+        {
+            // blob container name - can we set a default somehow
+            if (String.IsNullOrWhiteSpace(containerName))
+                //containerName = "/";
+                return null;
+
+            if (file == null || !file.IsValid)
+                return null;
+
+            string FileName = file.Filename;
+            string ContentType = file.ContentType;
+
+            var ImageFile = new MemoryStream(file.Data);
+
+            // validate
+            if (ImageFile == null || ImageFile.Length < 1)
+                return null;
+
+            if (String.IsNullOrWhiteSpace(ContentType))
+                ContentType = MimeTypeMap.DefaultMIMEType;
+
+            // reset the pointer
+            ImageFile.Position = 0;
+
+            // pick a new random name if none was supplied
+            //if (String.IsNullOrWhiteSpace(blobName))
+            //{
+            //    Randomizer rnd = new Randomizer();
+            //    blobName = $"{rnd.RandomCode(11)}{MimeTypeMap.GetExtension(this.ContentType)}";
+            //}
+            //else
+            blobName = blobName.Trim();
+
+            // Get a reference to a share and then create it
+            BlobContainerClient container = new BlobContainerClient(this.ConnectionString, containerName);
+
+            // check the container exists
+            Response<bool> exists = container.Exists();
+            if (!exists.Value)
+                return null;
+            //container.Create();
+
+            // Get a reference to the blob name
+            BlobClient blob = container.GetBlobClient(blobName);
+            // what if the name already exist in the container
+
+            // Upload local file
+            Dictionary<string, string> meta = new Dictionary<string, string>()
+            {
+                { "filename", FileName }
+                // optional description
+            };
+
+            // set options
+            BlobUploadOptions op = new BlobUploadOptions { HttpHeaders = new BlobHttpHeaders { ContentType = ContentType }, Metadata = meta };
+
+            // does this sig already exist?
+
+            // upload - returns the eTag and MD5 file sig
+            Response<BlobContentInfo> resp = blob.Upload(ImageFile, op);
+            //resp.Value.
+
+            // clear the memory stream
+            ImageFile.Dispose();
+
+            // return the used file name
+            return blobName;
+
+        }
+
+        #endregion [ Methods ]
+    }
 }
