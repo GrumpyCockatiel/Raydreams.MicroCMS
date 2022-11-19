@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Raydreams.MicroCMS.IO;
 
 namespace Raydreams.MicroCMS.CLI
@@ -7,23 +8,28 @@ namespace Raydreams.MicroCMS.CLI
     /// <summary></summary>
     public class Watcher : BackgroundService
     {
+        /// <summary>lock on uploading a file</summary>
         private readonly object _cflock = new object();
+
+        /// <summary>lock on deleting a file</summary>
         private readonly object _dflock = new object();
 
+        /// <summary></summary>
         private readonly IHostApplicationLifetime _hostLifetime;
 
-        private FileSystemWatcher watcher;
+        protected FileSystemWatcher Agent { get; set; }
 
         /// <summary></summary>
         /// <param name="repo"></param>
         /// <param name="config"></param>
         /// <param name="hostLifetime"></param>
-        public Watcher(ICMSRepository repo, AppConfig config, IHostApplicationLifetime hostLifetime)
+        public Watcher(ICMSRepository repo, AppConfig config, ILogger<Watcher> logger, IHostApplicationLifetime hostLifetime)
         {
-            _hostLifetime = hostLifetime ?? throw new ArgumentNullException(nameof(hostLifetime));
+            _hostLifetime = hostLifetime ?? throw new ArgumentNullException( nameof(hostLifetime) );
 
             this.Repo = repo;
             this.Config = config;
+            this.Logger = logger;
 
             // the local root folder to watch
             this.WatchRoot = new DirectoryInfo( Path.Combine( this.Config.LocalRoot ) );
@@ -31,25 +37,30 @@ namespace Raydreams.MicroCMS.CLI
             if (!this.WatchRoot.Exists)
                 throw new System.ArgumentException("Path to watch is required");
 
-            watcher = new FileSystemWatcher(this.WatchRoot.FullName);
+            this.Agent = new FileSystemWatcher(this.WatchRoot.FullName);
 
-            watcher.NotifyFilter = NotifyFilters.Attributes
+            this.Agent.NotifyFilter = NotifyFilters.Attributes
                                  | NotifyFilters.CreationTime
                                  | NotifyFilters.FileName
                                  | NotifyFilters.LastWrite
                                  | NotifyFilters.Security
                                  | NotifyFilters.Size;
 
-            watcher.Changed += OnWatchedFolderChanged;
-            watcher.Created += OnWatchedFolderChanged;
-            watcher.Deleted += OnWatchedFolderDeleted;
-            //watcher.Renamed += OnWatchedFolderChanged;
-            watcher.Error += OnError;
+            this.Agent.Filter = "*.*";
+            this.Agent.IncludeSubdirectories = true;
+            this.Agent.EnableRaisingEvents = true;
 
-            watcher.Filter = "*.*";
-            watcher.IncludeSubdirectories = true;
-            watcher.EnableRaisingEvents = true;
+            this.Agent.Changed += OnWatchedFolderChanged;
+            this.Agent.Created += OnWatchedFolderChanged;
+            this.Agent.Deleted += OnWatchedFolderDeleted;
+            //watcher.Renamed += OnWatchedFolderChanged;
+            this.Agent.Error += OnError;
         }
+
+        #region [ Properties ]
+
+        /// <summary></summary>
+        protected ILogger<Watcher> Logger { get; set; }
 
         /// <summary></summary>
         /// <remarks>Needs to be a list</remarks>
@@ -67,18 +78,21 @@ namespace Raydreams.MicroCMS.CLI
         /// <summary></summary>
         protected bool Uploading { get; set; } = false;
 
+        #endregion [ Properties ]
+
         /// <summary></summary>
         /// <param name="stoppingToken"></param>
         /// <returns></returns>
-        protected override Task<int> ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task<int> ExecuteAsync( CancellationToken stoppingToken )
         {
             int exitCode = 0;
 
-            Console.WriteLine($"Watching {this.WatchRoot.FullName}. Press Ctrl-C to quit.");
+            this.Logger.LogInformation($"Watching {this.WatchRoot.FullName}. Press CTRL-C to quit.");
 
             try
             {
-                Task.Delay(TimeSpan.FromMinutes(10)).GetAwaiter().GetResult();
+                // blocks here until CTRL-C
+                await Task.Delay( Timeout.Infinite, stoppingToken );
             }
             catch (OperationCanceledException)
             {
@@ -95,7 +109,7 @@ namespace Raydreams.MicroCMS.CLI
                 _hostLifetime.StopApplication();
             }
 
-            return Task.FromResult<int>(exitCode);
+            return exitCode;
         }
 
         /// <summary></summary>

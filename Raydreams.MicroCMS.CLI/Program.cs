@@ -17,7 +17,7 @@ namespace Raydreams.MicroCMS.CLI
         /// <returns>exit value</returns>
         public static int Main(string[] args)
         {
-            Console.WriteLine("Starting...");
+            Console.WriteLine("Starting MicroCMS CLI ...");
 
             // get the environment var
             string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
@@ -76,9 +76,10 @@ namespace Raydreams.MicroCMS.CLI
 
             // run the host sync
             // using just Build gives the Worker you can pass a cancellation token to
-            builder.Build().Start();
+            IHost host = builder.Build();
+            host.Run();
 
-            Console.WriteLine("Stopping...");
+            Console.WriteLine( "Stopping MicroCMS CLI ..." );
 
             return 0;
         }
