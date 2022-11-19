@@ -51,15 +51,15 @@ namespace Raydreams.MicroCMS.CLI
             })
             .ConfigureServices((ctx, services) =>
             {
-
                 //var x = ctx.Configuration;
 
                 services.AddOptions();
 
                 AppConfig config = ctx.Configuration.GetSection("AppConfig").Get<AppConfig>();
 
+                // set the local root from the CL
                 if (options != null && !String.IsNullOrWhiteSpace(options.WatchRoot))
-                    config.WatchRoot = options.WatchRoot;
+                    config.LocalRoot = options.WatchRoot;
 
                 // get the app config file
                 services.AddScoped<AppConfig>(p => { return config; } );
@@ -83,7 +83,7 @@ namespace Raydreams.MicroCMS.CLI
             return 0;
         }
 
-        /// <summary>load all types using Reflection</summary>
+        /// <summary>Once the CLI needs verbs this will load all the classes with VerbAttribute</summary>
         /// <returns></returns>
         private static Type[] LoadVerbs()
         {

@@ -109,7 +109,7 @@ namespace Raydreams.MicroCMS
 		public string BlobRoot { get; set; } = "cms";
 
         /// <summary>The images folder</summary>
-        public string ImagesDir { get; set; } = "images";
+        public string ImagesDir { get; set; } = "image";
 
         /// <summary>The layouts folder</summary>
         public string LayoutsDir { get; set; } = "layouts";

@@ -199,6 +199,13 @@ namespace Raydreams.MicroCMS
 
             var dir = share.GetRootDirectoryClient();
 
+            ShareFileClient file = dir.GetFileClient(fullPath);
+
+            // check the file exists
+            exists = file.Exists();
+            if (!exists.Value)
+                return 0;
+
             fullPath = fullPath.Trim(new char[] { ' ', '/', '\\' });
 
             Response resp = dir.DeleteFile(fullPath);

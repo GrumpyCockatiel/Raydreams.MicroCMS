@@ -14,6 +14,10 @@ namespace Raydreams.MicroCMS.CLI
 
         private FileSystemWatcher watcher;
 
+        /// <summary></summary>
+        /// <param name="repo"></param>
+        /// <param name="config"></param>
+        /// <param name="hostLifetime"></param>
         public Watcher(ICMSRepository repo, AppConfig config, IHostApplicationLifetime hostLifetime)
         {
             _hostLifetime = hostLifetime ?? throw new ArgumentNullException(nameof(hostLifetime));
@@ -21,7 +25,8 @@ namespace Raydreams.MicroCMS.CLI
             this.Repo = repo;
             this.Config = config;
 
-            this.WatchRoot = new DirectoryInfo( Path.Combine( this.Config.WatchRoot, this.Config.PagesDir ) );
+            // the local root folder to watch
+            this.WatchRoot = new DirectoryInfo( Path.Combine( this.Config.LocalRoot ) );
 
             if (!this.WatchRoot.Exists)
                 throw new System.ArgumentException("Path to watch is required");
@@ -46,14 +51,20 @@ namespace Raydreams.MicroCMS.CLI
             watcher.EnableRaisingEvents = true;
         }
 
+        /// <summary></summary>
+        /// <remarks>Needs to be a list</remarks>
         protected (String, DateTimeOffset) JustChanged { get; set; } = ( String.Empty, DateTimeOffset.MaxValue );
 
+        /// <summary></summary>
         protected AppConfig Config { get; set; }
 
+        /// <summary></summary>
         protected ICMSRepository Repo { get; set; }
 
+        /// <summary></summary>
         protected DirectoryInfo WatchRoot { get; set; }
 
+        /// <summary></summary>
         protected bool Uploading { get; set; } = false;
 
         /// <summary></summary>
@@ -112,18 +123,13 @@ namespace Raydreams.MicroCMS.CLI
 
             lock (_cflock)
             {
-                //this.Uploading = true;
-
                 var file = IOHelpers.ReadFile( e.FullPath );
 
-                // diff of the watch path and the full path - the file name
-                string diff = this.WatchRoot.PathDiff( new FileInfo(e.FullPath), false );
+                string diff = this.ResolveRemotePath(e.FullPath, false);
 
-                string etag = this.Repo.UploadFile(file, "blog", diff );
+                string etag = this.Repo.UploadFile(file, this.Config.RemoteRoot, diff );
 
                 Console.WriteLine($"{e.ChangeType}: {e.FullPath} {DateTimeOffset.UtcNow:o}");
-
-                //this.Uploading = false;
 
                 this.JustChanged = (e.FullPath, DateTimeOffset.UtcNow);
 
@@ -136,12 +142,27 @@ namespace Raydreams.MicroCMS.CLI
         {
             lock (_dflock)
             {
-                string diff = this.WatchRoot.PathDiff(new FileInfo(e.FullPath), true);
+                string diff = this.ResolveRemotePath(e.FullPath, true);
 
-                int results = this.Repo.DeleteFile( "blog", diff );
+                int results = this.Repo.DeleteFile(this.Config.RemoteRoot, diff );
 
                 Console.WriteLine($"{results}: Deleted file {diff} {DateTimeOffset.UtcNow:o}");
             }
+        }
+
+        /// <summary></summary>
+        /// <param name="fullLocalPath"></param>
+        /// <returns></returns>
+        /// <remarks>diff of the watch path and the full path - the file name</remarks>
+        protected string ResolveRemotePath(string fullLocalPath, bool includeFile )
+        {
+            string diff = this.WatchRoot.PathDiff( new FileInfo(fullLocalPath), includeFile );
+            diff = diff.Trim(new char[] { ' ', '/', '\\' });
+
+            if (diff.StartsWith(this.Config.LocalPagesDir))
+                diff = diff.Substring(this.Config.LocalPagesDir.Length);
+
+            return diff;
         }
 
         /// <summary></summary>
@@ -155,4 +176,3 @@ namespace Raydreams.MicroCMS.CLI
     }
 
 }
-
