@@ -4,16 +4,15 @@ namespace Raydreams.MicroCMS.CLI
 {
 	public class AppConfig
 	{
-        #region [ Fields ]
-
-        #endregion [ Fields ]
-
         #region [ Properties ]
 
         /// <summary></summary>
         public string? ConnectionString { get; set; }
 
+        public string RemoteRoot { get; set; } = "blog";
+
         /// <summary>The root blob container name</summary>
+        /// <remarks>Want to get from the command line</remarks>
 		public string WatchRoot { get; set; } = "Blog";
 
         /// <summary></summary>

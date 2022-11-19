@@ -180,8 +180,29 @@ namespace Raydreams.MicroCMS
             Response<ShareFileUploadInfo> resp2 = resp.Value.Upload(data);
             string etag = resp2.Value.ETag.ToString();
 
-            Console.WriteLine( $"{etag} : Uploaded file {file.Filename}");
             return etag;
+        }
+
+        /// <summary></summary>
+        /// <param name="shareName"></param>
+        /// <param name="fullPath"></param>
+        /// <returns></returns>
+        public int DeleteFile(string shareName, string fullPath)
+        {
+            // Get a reference to a share and then create it
+            ShareClient share = new ShareClient(this.ConnectionString, shareName);
+
+            Response<bool> exists = share.Exists();
+
+            if (!exists.Value)
+                return 0;
+
+            var dir = share.GetRootDirectoryClient();
+
+            fullPath = fullPath.Trim(new char[] { ' ', '/', '\\' });
+
+            Response resp = dir.DeleteFile(fullPath);
+            return resp.Status;
         }
 
         /// <summary>Recursive call to get all child files</summary>

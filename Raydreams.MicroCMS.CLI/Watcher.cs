@@ -7,12 +7,17 @@ namespace Raydreams.MicroCMS.CLI
     /// <summary></summary>
     public class Watcher : BackgroundService
     {
-        private readonly object _flock = new object();
+        private readonly object _cflock = new object();
+        private readonly object _dflock = new object();
+
+        private readonly IHostApplicationLifetime _hostLifetime;
 
         private FileSystemWatcher watcher;
 
-        public Watcher(ICMSRepository repo, AppConfig config)
+        public Watcher(ICMSRepository repo, AppConfig config, IHostApplicationLifetime hostLifetime)
         {
+            _hostLifetime = hostLifetime ?? throw new ArgumentNullException(nameof(hostLifetime));
+
             this.Repo = repo;
             this.Config = config;
 
@@ -41,6 +46,8 @@ namespace Raydreams.MicroCMS.CLI
             watcher.EnableRaisingEvents = true;
         }
 
+        protected (String, DateTimeOffset) JustChanged { get; set; } = ( String.Empty, DateTimeOffset.MaxValue );
+
         protected AppConfig Config { get; set; }
 
         protected ICMSRepository Repo { get; set; }
@@ -54,24 +61,60 @@ namespace Raydreams.MicroCMS.CLI
         /// <returns></returns>
         protected override Task<int> ExecuteAsync(CancellationToken stoppingToken)
         {
+            int exitCode = 0;
+
             Console.WriteLine($"Watching {this.WatchRoot.FullName}. Press Ctrl-C to quit.");
 
-            Task.Delay( TimeSpan.FromMinutes(10) ).GetAwaiter().GetResult();
+            try
+            {
+                Task.Delay(TimeSpan.FromMinutes(10)).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("The job has been killed with CTRL+C");
+                exitCode = -1;
+            }
+            catch (Exception ex)
+            {
+                //_logger?.LogError(ex, "An error occurred");
+                exitCode = 1;
+            }
+            finally
+            {
+                _hostLifetime.StopApplication();
+            }
 
-            return Task.FromResult<int>(0);
+            return Task.FromResult<int>(exitCode);
+        }
+
+        /// <summary></summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        protected bool DoRecent(string path)
+        {
+            if (String.IsNullOrWhiteSpace(this.JustChanged.Item1))
+                return true;
+
+            if ( !path.Equals(this.JustChanged.Item1) )
+                return true;
+
+            if ( DateTimeOffset.UtcNow > this.JustChanged.Item2.AddSeconds(2) )
+                return true;
+
+            return false;
         }
 
         /// <summary>Any change or create will overwrite</summary>
         private void OnWatchedFolderChanged(object sender, FileSystemEventArgs e)
         {
-            if (this.Uploading)
+            if ( !this.DoRecent(e.FullPath) )
                 return;
 
-            lock (_flock)
+            lock (_cflock)
             {
-                this.Uploading = true;
+                //this.Uploading = true;
 
-                var file = IOHelpers.ReadFile(e.FullPath);
+                var file = IOHelpers.ReadFile( e.FullPath );
 
                 // diff of the watch path and the full path - the file name
                 string diff = this.WatchRoot.PathDiff( new FileInfo(e.FullPath), false );
@@ -80,14 +123,25 @@ namespace Raydreams.MicroCMS.CLI
 
                 Console.WriteLine($"{e.ChangeType}: {e.FullPath} {DateTimeOffset.UtcNow:o}");
 
-                this.Uploading = false;
+                //this.Uploading = false;
+
+                this.JustChanged = (e.FullPath, DateTimeOffset.UtcNow);
+
+                Console.WriteLine($"{etag} : Uploaded file {file.Filename}");
             }
         }
 
         /// <summary></summary>
         private void OnWatchedFolderDeleted(object sender, FileSystemEventArgs e)
         {
+            lock (_dflock)
+            {
+                string diff = this.WatchRoot.PathDiff(new FileInfo(e.FullPath), true);
 
+                int results = this.Repo.DeleteFile( "blog", diff );
+
+                Console.WriteLine($"{results}: Deleted file {diff} {DateTimeOffset.UtcNow:o}");
+            }
         }
 
         /// <summary></summary>
@@ -97,7 +151,6 @@ namespace Raydreams.MicroCMS.CLI
         {
             Console.WriteLine($"{e.GetException()}");
         }
-
 
     }
 

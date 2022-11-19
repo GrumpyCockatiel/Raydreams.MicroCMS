@@ -1,7 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Reflection;
+using CommandLine;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Raydreams.MicroCMS.IO;
 
 namespace Raydreams.MicroCMS.CLI
@@ -18,6 +22,15 @@ namespace Raydreams.MicroCMS.CLI
             // get the environment var
             string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 
+            // load all the CL args into BaseOptions first and cast them later
+            //var types = LoadVerbs();
+            CLIBaseOptions? options = new CLIBaseOptions();
+
+            // populate the options
+            _ = Parser.Default.ParseArguments<CLIBaseOptions>(args)
+                .WithParsed<CLIBaseOptions>((o) => { options = o as CLIBaseOptions; });
+                //.WithNotParsed((e) => { Console.WriteLine("Failed to load arguments");Environment.Exit(-1); });
+
             // inject all the input
             IHostBuilder builder = new HostBuilder()
             .ConfigureLogging((ctx, logging) =>
@@ -33,14 +46,20 @@ namespace Raydreams.MicroCMS.CLI
                 .AddJsonFile($"appsettings.{env}.json", true, true);
                 config.AddEnvironmentVariables();
 
-                if (args != null)
+                if ( args != null )
                     config.AddCommandLine(args);
             })
             .ConfigureServices((ctx, services) =>
             {
+
+                //var x = ctx.Configuration;
+
                 services.AddOptions();
 
                 AppConfig config = ctx.Configuration.GetSection("AppConfig").Get<AppConfig>();
+
+                if (options != null && !String.IsNullOrWhiteSpace(options.WatchRoot))
+                    config.WatchRoot = options.WatchRoot;
 
                 // get the app config file
                 services.AddScoped<AppConfig>(p => { return config; } );
@@ -62,6 +81,13 @@ namespace Raydreams.MicroCMS.CLI
             Console.WriteLine("Stopping...");
 
             return 0;
+        }
+
+        /// <summary>load all types using Reflection</summary>
+        /// <returns></returns>
+        private static Type[] LoadVerbs()
+        {
+            return Assembly.GetExecutingAssembly().GetTypes().Where(t => t.GetCustomAttribute<VerbAttribute>() != null).ToArray();
         }
     }
 }

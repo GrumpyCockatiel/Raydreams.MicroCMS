@@ -284,6 +284,11 @@ namespace Raydreams.MicroCMS
 
         }
 
+        public int DeleteFile(string shareName, string fullPath)
+        {
+            throw new System.NotImplementedException("Delete file for Blobs not done yet");
+        }
+
         #endregion [ Methods ]
     }
 }

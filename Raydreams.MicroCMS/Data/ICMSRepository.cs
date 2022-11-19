@@ -13,6 +13,8 @@ namespace Raydreams.MicroCMS
         List<string> ListFiles(string shareName, string pattern = null);
 
         string UploadFile(RawFileWrapper file, string shareName, string sharePath);
+
+        int DeleteFile(string shareName, string fullPath);
     }
 }
 
