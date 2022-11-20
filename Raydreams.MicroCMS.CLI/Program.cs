@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Raydreams.MicroCMS.IO;
+using Raydreams.MicroCMS.Logging;
 
 namespace Raydreams.MicroCMS.CLI
 {
@@ -28,17 +29,18 @@ namespace Raydreams.MicroCMS.CLI
 
             // populate the options
             _ = Parser.Default.ParseArguments<CLIBaseOptions>(args)
-                .WithParsed<CLIBaseOptions>((o) => { options = o as CLIBaseOptions; });
-                //.WithNotParsed((e) => { Console.WriteLine("Failed to load arguments");Environment.Exit(-1); });
+                .WithParsed<CLIBaseOptions>((o) => { options = o as CLIBaseOptions; })
+                .WithNotParsed((e) => { Console.WriteLine("Failed to load arguments");Environment.Exit(-1); });
 
             // inject all the input
             IHostBuilder builder = new HostBuilder()
-            .ConfigureLogging((ctx, logging) =>
+            .ConfigureLogging( (ctx, logging) =>
             {
-                logging.AddConfiguration(ctx.Configuration.GetSection("Logging"));
+                //logging.AddConfiguration( ctx.Configuration.GetSection("Logging") );
                 logging.ClearProviders();
-                logging.AddDebug();
+                //logging.AddDebug();
                 logging.AddConsole();
+                logging.AddProvider( new FileLogProvider(options.WatchRoot) );
             })
             .ConfigureAppConfiguration((ctx, config) =>
             {

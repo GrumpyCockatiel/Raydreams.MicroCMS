@@ -3,7 +3,7 @@ using Microsoft.Azure.Cosmos.Table;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
-namespace Raydreams.MicroCMS
+namespace Raydreams.MicroCMS.Logging
 {
     /// <summary>Encapsulate all log information into a single object</summary>
     /// <remarks>Designed to work with it without Azure Tables</remarks>

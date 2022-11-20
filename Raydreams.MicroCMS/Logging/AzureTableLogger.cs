@@ -5,10 +5,28 @@ using Microsoft.Azure.Cosmos.Table;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 
-namespace Raydreams.MicroCMS
+namespace Raydreams.MicroCMS.Logging
 {
-	/// <summary>Logs to an Azure Table</summary>
-	public class AzureTableLogger : AzureTableRepository<LogRecord>, ILogger
+	/// <summary>Provider for logging to Azure Tables</summary>
+    public sealed class AzureTableLoggerProvider : ILoggerProvider
+    {
+        private string _connStr = null;
+
+        public AzureTableLoggerProvider(string connStr)
+        {
+            this._connStr = connStr;
+        }
+
+        public ILogger CreateLogger(string categoryName) => new AzureTableLogger(this._connStr);
+
+        public void Dispose()
+        {
+            return;
+        }
+    }
+
+    /// <summary>Logs to an Azure Table</summary>
+    public class AzureTableLogger : AzureTableRepository<LogRecord>, ILogger
 	{
 		private LogLevel _level = LogLevel.Trace;
 
@@ -167,21 +185,4 @@ namespace Raydreams.MicroCMS
 			return base.Insert( rec );
 		}
 	}
-
-    public sealed class AzureTableLoggerProvider : ILoggerProvider
-    {
-		private string _connStr = null;
-
-        public AzureTableLoggerProvider(string connStr)
-        {
-			this._connStr = connStr;
-        }
-
-        public ILogger CreateLogger(string categoryName) => new AzureTableLogger( this._connStr );
-
-        public void Dispose()
-        {
-            return;
-        }
-    }
 }

@@ -8,16 +8,19 @@ namespace Raydreams.MicroCMS.CLI
     /// <summary></summary>
     public class Watcher : BackgroundService
     {
-        /// <summary>lock on uploading a file</summary>
-        private readonly object _cflock = new object();
+        #region [ Fields ]
 
-        /// <summary>lock on deleting a file</summary>
-        private readonly object _dflock = new object();
+        /// <summary>lock on changing any remote file</summary>
+        private readonly object _flock = new object();
 
         /// <summary></summary>
         private readonly IHostApplicationLifetime _hostLifetime;
 
-        
+        /// <summary></summary>
+        private readonly string[] ExclusionList = new[] { "DS_Store", "log_" };
+
+        #endregion [ Fields ]
+
         /// <summary></summary>
         /// <param name="repo"></param>
         /// <param name="config"></param>
@@ -93,7 +96,7 @@ namespace Raydreams.MicroCMS.CLI
 
             try
             {
-                // blocks here until CTRL-C
+                // when CTRL-C is pressed the cancellation token with be set to cancel and this task will stop
                 await Task.Delay( Timeout.Infinite, stoppingToken );
             }
             catch (OperationCanceledException)
@@ -135,7 +138,7 @@ namespace Raydreams.MicroCMS.CLI
         private void OnWatchedFolderChanged(object sender, FileSystemEventArgs e)
         {
             // some files we dont want to upload
-            if (!String.IsNullOrWhiteSpace(e.Name) && e.Name.Contains("DS_Store"))
+            if ( String.IsNullOrWhiteSpace(e.Name) || e.Name.Contains( this.ExclusionList ) )
                 return;
 
             if ( !this.DoRecent(e.FullPath) )
@@ -165,7 +168,7 @@ namespace Raydreams.MicroCMS.CLI
         /// <returns></returns>
         protected bool UpdateRemoteFile(string fullLocalPath)
         {
-            lock (_cflock)
+            lock (_flock)
             {
                 var file = IOHelpers.ReadFile(fullLocalPath);
 
@@ -190,7 +193,7 @@ namespace Raydreams.MicroCMS.CLI
             if (String.IsNullOrWhiteSpace(fullLocalPath))
                 return false;
 
-            lock (_dflock)
+            lock (_flock)
             {
                 int results = 0;
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -90,6 +91,32 @@ namespace Raydreams.MicroCMS
         public static bool IsAlphanumeric(this System.String str)
         {
             return str.All(char.IsLetterOrDigit);
+        }
+
+        /// <summary>Tests a list of strings to see if it contains any string from the sublist.</summary>
+        /// <param name="list">the full list to test</param>
+        /// <param name="sublist">sublist to exclude</param>
+        /// <returns></returns>
+        /// <remarks>Matches whole words exactly</remarks>
+        public static bool SublistContains(this List<string> list, string[] sublist)
+        {
+            IEnumerable<string> union = list.Intersect(sublist);
+            return (union != null && union.Count() > 0);
+        }
+
+        /// <summary></summary>
+        /// <param name="str"></param>
+        /// <param name="sublist"></param>
+        /// <returns></returns>
+        public static bool Contains(this string str, string[] sublist)
+        {
+            foreach (string s in sublist)
+            {
+                if ( str.Contains(s) )
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>Returns the enum value by the description string on the enum member</summary>

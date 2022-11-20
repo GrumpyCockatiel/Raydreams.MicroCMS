@@ -4,7 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Transactions;
 
-namespace Raydreams.MicroCMS
+namespace Raydreams.MicroCMS.Logging
 {
     public class NullLogger : ILogger
     {
