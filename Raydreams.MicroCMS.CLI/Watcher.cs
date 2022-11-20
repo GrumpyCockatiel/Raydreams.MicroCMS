@@ -17,8 +17,7 @@ namespace Raydreams.MicroCMS.CLI
         /// <summary></summary>
         private readonly IHostApplicationLifetime _hostLifetime;
 
-        protected FileSystemWatcher Agent { get; set; }
-
+        
         /// <summary></summary>
         /// <param name="repo"></param>
         /// <param name="config"></param>
@@ -53,11 +52,14 @@ namespace Raydreams.MicroCMS.CLI
             this.Agent.Changed += OnWatchedFolderChanged;
             this.Agent.Created += OnWatchedFolderChanged;
             this.Agent.Deleted += OnWatchedFolderDeleted;
-            //watcher.Renamed += OnWatchedFolderChanged;
+            this.Agent.Renamed += OnWatchedFolderRenamed;
             this.Agent.Error += OnError;
         }
 
         #region [ Properties ]
+
+        /// <summary>The actual folder watcher</summary>
+        protected FileSystemWatcher Agent { get; set; }
 
         /// <summary></summary>
         protected ILogger<Watcher> Logger { get; set; }
@@ -132,35 +134,73 @@ namespace Raydreams.MicroCMS.CLI
         /// <summary>Any change or create will overwrite</summary>
         private void OnWatchedFolderChanged(object sender, FileSystemEventArgs e)
         {
+            // some files we dont want to upload
+            if (!String.IsNullOrWhiteSpace(e.Name) && e.Name.Contains("DS_Store"))
+                return;
+
             if ( !this.DoRecent(e.FullPath) )
                 return;
 
-            lock (_cflock)
-            {
-                var file = IOHelpers.ReadFile( e.FullPath );
-
-                string diff = this.ResolveRemotePath(e.FullPath, false);
-
-                string etag = this.Repo.UploadFile(file, this.Config.RemoteRoot, diff );
-
-                Console.WriteLine($"{e.ChangeType}: {e.FullPath} {DateTimeOffset.UtcNow:o}");
-
-                this.JustChanged = (e.FullPath, DateTimeOffset.UtcNow);
-
-                Console.WriteLine($"{etag} : Uploaded file {file.Filename}");
-            }
+            this.UpdateRemoteFile(e.FullPath);
         }
 
         /// <summary></summary>
         private void OnWatchedFolderDeleted(object sender, FileSystemEventArgs e)
         {
+            this.DeleteRemoteFile(e.FullPath);
+        }
+
+        /// <summary></summary>
+        private void OnWatchedFolderRenamed(object sender, RenamedEventArgs e)
+        {
+            // do a delete on the old file
+            this.DeleteRemoteFile(e.OldFullPath);
+
+            // insert on the new file
+            this.UpdateRemoteFile(e.FullPath);
+        }
+
+        /// <summary></summary>
+        /// <param name="fullLocalPath"></param>
+        /// <returns></returns>
+        protected bool UpdateRemoteFile(string fullLocalPath)
+        {
+            lock (_cflock)
+            {
+                var file = IOHelpers.ReadFile(fullLocalPath);
+
+                string diff = this.ResolveRemotePath(fullLocalPath, false);
+
+                string etag = this.Repo.UploadFile(file, this.Config.RemoteRoot, diff);
+
+                // check if this file was recently uploaded
+                this.JustChanged = (fullLocalPath, DateTimeOffset.UtcNow);
+
+                Console.WriteLine($"{etag} : Uploaded file {file.Filename}");
+
+                return !String.IsNullOrWhiteSpace(etag);
+            }
+        }
+
+        /// <summary></summary>
+        /// <param name="fullLocalPath"></param>
+        /// <returns></returns>
+        protected bool DeleteRemoteFile(string fullLocalPath)
+        {
+            if (String.IsNullOrWhiteSpace(fullLocalPath))
+                return false;
+
             lock (_dflock)
             {
-                string diff = this.ResolveRemotePath(e.FullPath, true);
+                int results = 0;
 
-                int results = this.Repo.DeleteFile(this.Config.RemoteRoot, diff );
+                string diff = this.ResolveRemotePath(fullLocalPath, true);
+
+                results = this.Repo.DeleteFile(this.Config.RemoteRoot, diff);
 
                 Console.WriteLine($"{results}: Deleted file {diff} {DateTimeOffset.UtcNow:o}");
+
+                return results > 0;
             }
         }
 
@@ -184,7 +224,7 @@ namespace Raydreams.MicroCMS.CLI
         /// <param name="e"></param>
         private void OnError(object sender, ErrorEventArgs e)
         {
-            Console.WriteLine($"{e.GetException()}");
+            this.Logger.LogError(e.GetException(), e.GetException().Message);
         }
 
     }
