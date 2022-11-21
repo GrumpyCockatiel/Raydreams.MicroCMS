@@ -130,6 +130,7 @@ namespace Raydreams.MicroCMS
 			// validate input
             file = String.IsNullOrWhiteSpace( file ) ? $"{this.Config.DefaultHome}.md" : $"{file.Trim()}.md";
 
+            // use the default template if none is defined - needs to be in Config
             template = String.IsNullOrWhiteSpace( template ) ? $"main.{this.Config.LayoutExtension}" : $"{template.Trim()}.{this.Config.LayoutExtension}";
 
             this.Logger?.LogInformation( $"Request for page {file}" );
@@ -138,8 +139,8 @@ namespace Raydreams.MicroCMS
             AzureFileShareRepository repo = new AzureFileShareRepository( this.Config.FileStore );
 
             // BUG - need to test the file exists first - if not return 404
-            var md = repo.GetTextFile( this.Config.BlobRoot, file );
-            var layout = repo.GetTextFile(this.Config.BlobRoot, $"{this.Config.LayoutsDir}/{template}" );
+            PageDetails md = repo.GetTextFile( this.Config.BlobRoot, file );
+            PageDetails layout = repo.GetTextFile(this.Config.BlobRoot, $"{this.Config.LayoutsDir}/{template}" );
 
             if ( String.IsNullOrWhiteSpace( md.Content ) )
 				md.Content = "This is not the page you are looking for...";
@@ -151,13 +152,12 @@ namespace Raydreams.MicroCMS
             string html = this.ConvertMarkdown( md.Content );
 
             // insert the body
-            if ( !String.IsNullOrWhiteSpace( layout.Content ) )
-            {
-                layout.Content = layout.Content.Replace( @"{% BODY %}", html ).Replace( @"{% TIMESTAMP %}", md.LastUpdated.ToString("yyyy-MM-dd hh:mm:ss zzz") );
-                return layout.Content;
-            }
+            if ( String.IsNullOrWhiteSpace(layout.Content) )
+                layout.Content = MarkdownEngine.SimpleHTML;
 
-			return html;
+            layout.Content = layout.Content.Replace( @"{% BODY %}", html ).Replace( @"{% TIMESTAMP %}", md.LastUpdated.ToString("yyyy-MM-dd hh:mm:ss zzz") );
+
+            return layout.Content;
         }
 
         /// <summary>Gets an image file from the images folder</summary>
@@ -165,7 +165,7 @@ namespace Raydreams.MicroCMS
         /// <returns></returns>
         public RawFileWrapper GetImage( string file )
         {
-            // validate input
+            // validate input - set a default image in Config
             file = String.IsNullOrWhiteSpace( file ) ? "PROS.jpeg" : file.Trim();
 
             // get the files
